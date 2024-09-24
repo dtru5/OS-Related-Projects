@@ -31,7 +31,14 @@ int main(int argc, char *argv[]) {
      * Attach memory region 1
     */
 
+    int* matrix = shmat(shmid_matrix, NULL, 0);
+    int* partial_sum = shmat(shmid_partial_sum, NULL, 0);
+   
+    long sum = sum_matrix(start_row_id, end_row_id, matrix);
+    partial_sum[partial_sum_index] = sum;
 
+    shmdt(matrix);
+    shmdt(partial_sum);
 
     exit(0);
 }

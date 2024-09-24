@@ -38,6 +38,11 @@ long sum_matrix(int start_row, int end_row, int *matrix)
     /* ToDo1:
      * write the code for summing all elements from start_row to end_row
     */
+    for(int i = start_row; i <= end_row; i++){
+        for(int j = 0; j < COLUMN_COUNT; j++){
+            sum += matrix[i * COLUMN_COUNT + j];
+        }
+    }
 
     return sum;
 }
