@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     //Attach shared memory segment
-    int* partial_sum = shmat(shm_partial_sum_id, NULL, 0);
+    long* partial_sum = (long*) shmat(shm_partial_sum_id, NULL, 0);
 
 
 
@@ -136,11 +136,11 @@ int main(int argc, char *argv[]) {
      * Sum all the partial-sums stored in sharred memory region 2 (by children processes)
      * and print the sum.
     */
-   long total_sum = 0;
-   for(int i = 0; i < num_processes; i++){
-    total_sum += partial_sum[i];
-   }
-   printf("Total Sum: %ld\n", total_sum);
+    long total_sum = 0;
+    for(int i = 0; i < num_processes; i++){
+        total_sum += partial_sum[i];
+    }
+    printf("Total Sum: %ld\n", total_sum);
 
 
     clock_gettime(CLOCK_REALTIME, &end);
@@ -156,12 +156,10 @@ int main(int argc, char *argv[]) {
      * Hint:
      * Google "man shmdt" and "man shmctl"
     */
-    shmdt(matrix);
-    shmdt(partial_sum);
-    shmctl(shm_matrix_id, IPC_RMID, NULL);
-    shmctl(shm_partial_sum_id, IPC_RMID, NULL);
-
-
+    shmdt(matrix); //Detach matrix
+    shmdt(partial_sum); //Detach partial_sum
+    shmctl(shm_matrix_id, IPC_RMID, NULL); //Remove memory region for matrix
+    shmctl(shm_partial_sum_id, IPC_RMID, NULL); //Remove memory region for partial sum
 
     return 0;
 }
