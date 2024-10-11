@@ -8,7 +8,6 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/shm.h>
-#include <time.h>
 
 #define ROWS_COUNT 32768
 #define COLUMN_COUNT 32768
