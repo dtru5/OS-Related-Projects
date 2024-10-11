@@ -18,6 +18,13 @@ void *sum_matrix_rows(void *arg) {
      * Sum the assigned rows from start_row to end_row for the current thread.
      * Store the result in partial_sums[data->thread_id].
      */
+    // Sum the assigned rows from start_row to end_row for the current thread
+    for (int i = data->start_row; i < data->end_row; i++) {
+        for (int j = 0; j < COLUMN_COUNT; j++) {
+            sum += matrix[i][j];
+        }
+    }
+    partial_sums[data->thread_id] = sum;
 
     pthread_exit(NULL);
 }
