@@ -6,8 +6,8 @@
 #include <pthread.h>
 #include <time.h>
 
-#define ROWS_COUNT 256
-#define COLUMN_COUNT 256
+#define ROWS_COUNT 16384 
+#define COLUMN_COUNT 16384 
 #define MAX_THREADS 256
 
 // Struct to pass thread data

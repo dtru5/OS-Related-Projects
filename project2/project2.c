@@ -9,7 +9,8 @@ int main(int argc, char *argv[])
     }
 
     int num_threads = atoi(argv[1]);
-    if (num_threads % 2 != 0 && (num_threads <= 0 || num_threads > MAX_THREADS))
+    // Added a check for using only powers of 2
+    if ((num_threads % 2 != 0 && num_threads != 1)|| num_threads <= 0 || num_threads > MAX_THREADS)
     {
         printf("Invalid number of threads: %d\n", num_threads);
         return 1;

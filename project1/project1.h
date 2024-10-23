@@ -9,8 +9,9 @@
 #include <sys/types.h>
 #include <sys/shm.h>
 
-#define ROWS_COUNT 32768
-#define COLUMN_COUNT 32768
+// og count: 32768
+#define ROWS_COUNT 16384 
+#define COLUMN_COUNT 16384
 
 /* given a matrix, with pre-define number of rows (ROWS_COUNT)
  * and number of columns (COLUMN_COUNT), print_matrix function prints
