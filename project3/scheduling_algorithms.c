@@ -17,7 +17,8 @@ void calculate_times(ThreadData *threads)
     // - Waiting time: Time the thread spends waiting before its execution starts.
     // - Turnaround time: Time from arrival to completion (Turnaround time = Waiting time + Burst time).
     // - Completion time: The actual time when the thread completes (Completion time = Turnaround time + Arrival time).
-    for (int i = 0; i < NUM_THREADS; i++) {
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
         threads[i].turnaround_time = threads[i].waiting_time + threads[i].burst_time;
         threads[i].completion_time = threads[i].turnaround_time + threads[i].arrival_time;
     }
@@ -28,15 +29,11 @@ void print_results(ThreadData *threads)
     /* ToDo3: Implement a function to print the results of the scheduling algorithms.
      * Display the waiting time, turnaround time, completion time, and sum for each thread.
      */
-    printf("Thread ID | Waiting Time | Turnaround Time | Completion Time | Sum\n");
-    printf("-------------------------------------------------------------\n");
-    for (int i = 0; i < NUM_THREADS; i++) {
-        printf("   %d      |      %d      |       %d        |       %d        | %d\n",
-               threads[i].tid,
-               threads[i].waiting_time,
-               threads[i].turnaround_time,
-               threads[i].completion_time,
-               threads[i].sum);
+    printf("\nScheduling Results\n");
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        printf("Thread %d: Waiting Time: %d, Turnaround Time: %d, Completion Time: %d, Sum: %d\n",
+               threads[i].tid, threads[i].waiting_time, threads[i].turnaround_time, threads[i].completion_time, threads[i].sum);
     }
 }
 
@@ -48,7 +45,8 @@ void calculate_sum(ThreadData *thread)
      *Store the result in the thread's 'sum' field.
      */
     thread->sum = 0;
-    for (int i = 0; i < thread->burst_time; i++) {
+    for (int i = 0; i < thread->burst_time; i++)
+    {
         thread->sum += thread->array[i];
     }
 }
@@ -59,14 +57,13 @@ void *fcfs_thread(void *arg)
      * Use 'compare_and_swap' to mark the thread as running. Calculate its sum, simulate execution using 'usleep', and reset its scheduler state.
      */
     ThreadData *thread = (ThreadData *)arg;
-
-    // Simulate execution
-    compare_and_swap(&thread->scheduler_array[thread->tid], 0, 1); // Mark as running
-    usleep(thread->burst_time * 1000); // Simulate processing time
-    calculate_sum(thread); // Calculate the sum
-
-    // Mark as done
-    compare_and_swap(&thread->scheduler_array[thread->tid], 1, 2); // Mark as completed
+    printf("Thread %d is now running.\n", thread->tid);
+    if (compare_and_swap(&thread->scheduler_array[thread->tid], 0, 1))
+    {                                             // Try to mark as running
+        calculate_sum(thread);                    // Calculate sum to simulate burst time
+        usleep(thread->burst_time * 1000);        // Simulate execution (in milliseconds)
+        thread->scheduler_array[thread->tid] = 0; // Reset state to ready
+    }
     return NULL;
 }
 
@@ -78,23 +75,28 @@ void fcfs(ThreadData *threads)
      * - Calculate and print the scheduling results.
      */
 
-        // Calculate waiting times
-    threads[0].waiting_time = 0; // First thread waits for 0 time
-    for (int i = 1; i < NUM_THREADS; i++) {
-        threads[i].waiting_time = threads[i-1].waiting_time + threads[i-1].burst_time;
+    // Assign waiting times
+    int current_time = 0; // Track the current time for calculating waiting times
+
+    // Calculate waiting times based on the order of arrival
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        // Calculate waiting time
+        threads[i].waiting_time = current_time - threads[i].arrival_time;
+
+        // Update current time to reflect when this thread finishes execution
+        current_time += threads[i].burst_time;
     }
 
-    pthread_t thread_ids[NUM_THREADS];
-
-    // Create and join threads
-    for (int i = 0; i < NUM_THREADS; i++) {
-        pthread_create(&thread_ids[i], NULL, fcfs_thread, (void *)&threads[i]);
+    pthread_t tids[NUM_THREADS];
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        pthread_create(&tids[i], NULL, fcfs_thread, (void *)&threads[i]);
     }
-
-    for (int i = 0; i < NUM_THREADS; i++) {
-        pthread_join(thread_ids[i], NULL);
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        pthread_join(tids[i], NULL);
     }
-
     calculate_times(threads);
     print_results(threads);
 }
@@ -105,11 +107,13 @@ void *sjf_thread(void *arg)
      * Calculate the thread's sum, simulate execution using 'usleep', and print its status.
      */
     ThreadData *thread = (ThreadData *)arg;
-
-    compare_and_swap(&thread->scheduler_array[thread->tid], 0, 1); // Mark as running
-    usleep(thread->burst_time * 1000); // Simulate processing time
-    calculate_sum(thread); // Calculate the sum
-    compare_and_swap(&thread->scheduler_array[thread->tid], 1, 2); // Mark as completed
+    printf("Thread %d is now running.\n", thread->tid);
+    if (compare_and_swap(&thread->scheduler_array[thread->tid], 0, 1))
+    {                                             // Mark as running
+        calculate_sum(thread);                    // Calculate the sum
+        usleep(thread->burst_time * 1000);        // Simulate processing time
+        thread->scheduler_array[thread->tid] = 0; // Reset state to ready
+    }
     return NULL;
 }
 
@@ -121,31 +125,61 @@ void sjf(ThreadData *threads)
      * - Calculate and print the scheduling results.
      */
 
-    // Sort threads by burst time
-    for (int i = 0; i < NUM_THREADS - 1; i++) {
-        for (int j = i + 1; j < NUM_THREADS; j++) {
-            if (threads[i].burst_time > threads[j].burst_time) {
-                ThreadData temp = threads[i];
-                threads[i] = threads[j];
-                threads[j] = temp;
+    // Sort threads based on arrival time first then by burst time
+    for (int i = 0; i < NUM_THREADS - 1; i++)
+    {
+        for (int j = 0; j < NUM_THREADS - i - 1; j++)
+        {
+            if (threads[j].arrival_time > threads[j + 1].arrival_time)
+            {
+                ThreadData temp = threads[j];
+                threads[j] = threads[j + 1];
+                threads[j + 1] = temp;
             }
         }
     }
 
-    // Calculate waiting times for SJF
-    threads[0].waiting_time = 0; // First thread waits for 0 time
-    for (int i = 1; i < NUM_THREADS; i++) {
-        threads[i].waiting_time = threads[i-1].waiting_time + threads[i-1].burst_time;
+    for (int i = 0; i < NUM_THREADS - 1; i++)
+    {
+        for (int j = 1; j < NUM_THREADS - i - 1; j++)
+        {
+            if (threads[j].burst_time > threads[j + 1].burst_time)
+            {
+                ThreadData temp = threads[j];
+                threads[j] = threads[j + 1];
+                threads[j + 1] = temp;
+            }
+        }
     }
 
+    // Showing the order of threads with their burst time smallest to greatest.
+    // for(int i = 0; i < NUM_THREADS; i++){
+    //     printf("Thread %d with AT: %d\tBT: %d\n",threads[i].tid, threads[i].arrival_time, threads[i].burst_time);
+    // }
+
+    // Assign waiting times considering arrival times
+    int current_time = 0; // Initialize current time to 0
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        // If the current time is less than the arrival time of the thread, we need to wait
+        if (current_time < threads[i].arrival_time)
+        {
+            current_time = threads[i].arrival_time; // Advance time to the thread's arrival
+        }
+        threads[i].waiting_time = current_time - threads[i].arrival_time; // Calculate waiting time
+        current_time += threads[i].burst_time;                            // Update current time after execution
+    }
+
+    // Create and execute each thread
     pthread_t thread_ids[NUM_THREADS];
-
-    // Create and join threads
-    for (int i = 0; i < NUM_THREADS; i++) {
-        pthread_create(&thread_ids[i], NULL, sjf_thread, (void *)&threads[i]);
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        pthread_create(&thread_ids[i], NULL, sjf_thread, &threads[i]);
     }
 
-    for (int i = 0; i < NUM_THREADS; i++) {
+    // Join the threads
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
         pthread_join(thread_ids[i], NULL);
     }
 
@@ -158,40 +192,72 @@ void srjf(ThreadData *threads)
     /* ToDo9: Implement the Shortest Remaining Job First (SRJF) scheduling algorithm.
      * - Use a time variable and continuously check for the thread with the shortest remaining burst time.
      * - Implement preemption by switching to the thread with the shortest remaining time.
-     * - After all threads have completed, calculate and print the scheduling results
+     * - After all threads have completed, calculate and print the scheduling results.
      */
-
-    // Initialize remaining times
-    for (int i = 0; i < NUM_THREADS; i++) {
-        threads[i].remaining_time = threads[i].burst_time;
+    if (threads == NULL)
+    {
+        printf("No threads given.");
+        return;
     }
 
-    int completed = 0, current_time = 0;
-    while (completed < NUM_THREADS) {
-        int min_index = -1;
+    int completed = 0;    // Number of threads completed
+    int current_time = 0; // Current simulation time
 
-        // Find thread with the shortest remaining time that has arrived
-        for (int i = 0; i < NUM_THREADS; i++) {
-            if (threads[i].arrival_time <= current_time && threads[i].remaining_time > 0) {
-                if (min_index == -1 || threads[i].remaining_time < threads[min_index].remaining_time) {
-                    min_index = i;
+    while (completed < NUM_THREADS)
+    {
+        // Find the thread with the shortest remaining burst time that has already arrived
+        int shortest_index = -1;
+        int min_burst_time = __INT_MAX__;
+
+        // Loop through all threads to find the shortest burst time within the arrival range
+        for (int i = 0; i < NUM_THREADS; i++)
+        {
+            // Check if the process has arrived and is still pending (remaining_time > 0)
+            if (threads[i].arrival_time <= current_time && threads[i].remaining_time > 0)
+            {
+                // If the current process has a shorter remaining time than the found minimum
+                if (threads[i].remaining_time < min_burst_time)
+                {
+                    min_burst_time = threads[i].remaining_time; // Update the minimum remaining time
+                    shortest_index = i;                         // Update the index of the shortest job
                 }
             }
         }
 
-        if (min_index != -1) {
-            threads[min_index].waiting_time = current_time - threads[min_index].arrival_time;
-            compare_and_swap(&threads[min_index].scheduler_array[min_index], 0, 1); // Mark as running
-            usleep(threads[min_index].remaining_time * 1000); // Simulate processing time
-            calculate_sum(&threads[min_index]); // Calculate the sum
+        if (shortest_index == -1)
+        {
+            // No thread is ready to run at the current time, so advance the time.
+            current_time++;
+            continue;
+        }
 
-            // Mark as completed
-            threads[min_index].remaining_time = 0; // Thread completed
-            compare_and_swap(&threads[min_index].scheduler_array[min_index], 1, 2); // Mark as completed
+        // Execute the thread with the shortest remaining time for one unit of time
+        printf("Thread %d is now running (Remaining Time: %d)\n", threads[shortest_index].tid, threads[shortest_index].remaining_time);
+        threads[shortest_index].remaining_time--;
+        current_time++;
+        for (int i = 0; i < NUM_THREADS; i++)
+        {
+            if (threads[shortest_index].tid != threads[i].tid && threads[i].remaining_time > 0)
+                threads[i].waiting_time++;
+        }
+
+        // If the thread completes its execution
+        if (threads[shortest_index].remaining_time == 0)
+        {
+            threads[shortest_index].completion_time = current_time;
+            calculate_sum(&threads[shortest_index]); // Calculate sum after completion
             completed++;
-            current_time += threads[min_index].burst_time; // Move the time forward
-        } else {
-            current_time++; // If no threads are ready, move time forward
+            printf("Thread %d has finished execution\n", threads[shortest_index].tid);
+            if (shortest_index != completed - 1) // Avoid unnecessary swap if it's already in place
+            {
+                // Swap the completed thread with the thread at the `completed - 1` index
+                ThreadData temp = threads[completed - 1];
+                threads[completed - 1] = threads[shortest_index];
+                threads[shortest_index] = temp;
+
+                // Update the `shortest_index` to reflect its new position
+                shortest_index = completed - 1;
+            }
         }
     }
 
