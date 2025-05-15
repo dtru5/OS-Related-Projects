@@ -1,4 +1,4 @@
-OS Projects: Processes, Threading, and Scheduling
+# OS Projects: Processes, Threading, and Scheduling
 
 This repository contains three operating systems projects that explore foundational concepts including inter-process communication (IPC), multithreading, and CPU scheduling algorithms. Each project demonstrates a specific aspect of concurrent programming and performance evaluation.
 Project 1: Matrix Summation Using Processes and Shared Memory
