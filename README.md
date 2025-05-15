@@ -59,19 +59,25 @@ Build and Run Instructions
 Each project comes with its own Makefile or build instructions. To compile and run:
 
 # Project 1
-cd project1
-make
-./project1 <num_processes>
+> cd project1
+
+> make
+
+> ./project1 <num_processes>
 
 # Project 2
-cd project2
-make
-./project2 <num_threads>
+> cd project2
+
+> make
+
+> ./project2 <num_threads>
 
 # Project 3
-cd project3
-make
-./main
+> cd project3
+
+> make
+
+> ./main
 
 Topics Covered
 
